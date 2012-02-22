@@ -1,0 +1,109 @@
+body{
+}
+
+.board{
+	width: 600px;
+	height: 600px;
+	border: black 1px solid;
+	padding: 5px;
+	padding-right: 0px;
+	padding-bottom: 0px;
+	float: left;
+}
+.white {
+	width: 11.4%;
+	height: 11.4%;
+	background-color: #FFFFFF;
+	float: left;
+	padding: 0px;
+	border: 3px solid #FFFFFF;
+}
+.black {
+	width: 11.4%;
+	height: 11.4%;
+	background-color: rgb(150,150,150);
+	float: left;
+	padding: 0px;
+	border: 3px solid rgb(150,150,150);
+}
+.select{
+	border: 3px solid rgb(185,75,75);
+}
+.path{
+	border: 3px solid #00FF00;
+}
+.strike {
+	border: 3px solid #FF0000;
+}
+.ws {
+	background-image: URL('../svg/ws.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.wb {
+	background-image: URL('../svg/wb.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.wh{
+	background-image: URL('../svg/wh.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.wc{
+	background-image: URL('../svg/wc.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.wq{
+	background-image: URL('../svg/wq.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.wk{
+	background-image: URL('../svg/wk.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bs{
+	background-image: URL('../svg/bs.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bb{
+	background-image: URL('../svg/bb.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bh{
+	background-image: URL('../svg/bh.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bc{
+	background-image: URL('../svg/bc.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bq{
+	background-image: URL('../svg/bq.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
+.bk{
+	background-image: URL('../svg/bk.svg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 80%;
+}
