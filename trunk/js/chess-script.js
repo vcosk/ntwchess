@@ -5,6 +5,7 @@ $(document).ready(function() {
 		eval(document.getElementById('testcode').value);
 	});
 	Global.color = 'w';
+	Global.opponentColor = 'b';
 	Global.turn = true;
 	$('#board div').click(function() {
 		if(Global.turn) {
@@ -34,6 +35,7 @@ var Global = {
 	opponentPieceMap : [],
 	selected : null,
 	color	:  "",
+	opponentColor	:  "",
 	opponentStep : [],
 	userStep : [],
 	check	: false,
@@ -96,6 +98,28 @@ function search(array, data) {
 }
 
 function strikeOpponent(dest) {
+	if(search(strikePos, dest)) {
+		clearCurrentPaths();
+		Global.isSelected = false;
+
+		var selected = Global.selected;
+		$('#'+selected.currpos).removeClass(Global.color+selected.type);
+		$('#'+selected.currpos).removeAttr("rel");
+
+
+		var destRel = $('#'+dest).attr("rel");
+		var destP = Global.opponentPieceMap[destRel];
+		destP.currpos = "";
+		destP.alive = false;
+
+		$('#'+dest).removeClass(Global.opponentColor+destP.type);
+		$('#'+dest).removeAttr("rel");
+
+		$('#'+dest).addClass(Global.color+selected.type);
+		$('#'+dest).attr("rel", selected.number);
+		selected.currpos = dest;
+		Global.selected = null;
+	}
 }
 
 function moveSelectedPiece(dest) {
@@ -151,14 +175,7 @@ function loadUserPieces() {
 }
 
 function loadOpponentPieces() {
-	var color;
-	if(Global.color == 'w') {
-		color = 'b';
-	}
-	else {
-		color = 'w';
-	}
-	loadPieces(color, Global.opponent, false);
+	loadPieces(Global.opponentColor, Global.opponent, false);
 }
 
 function loadPieces(color, cells, user) {
