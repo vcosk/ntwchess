@@ -1,11 +1,27 @@
+var nextPos = [];
+var strikePos = [];
 $(document).ready(function() {
 	$('#run').click(function() {
 		eval(document.getElementById('testcode').value);
 	});
 	Global.color = 'w';
+	Global.turn = true;
 	$('#board div').click(function() {
-		if(true) {
-			if(!false) {
+		if(Global.turn) {
+			var rel = $(this).attr('rel');
+			var pos = this.id;
+			if(Global.isSelected) {
+				if(Board.isEmpty(pos)) {
+					moveSelectedPiece(pos);
+				}
+				else if(Board.isOpponent(pos)) {
+					strikeOpponent(pos);
+				}
+				else {
+					showPossibleMoves(this);
+				}
+			}
+			else {
 				showPossibleMoves(this);
 			}
 		}
@@ -23,6 +39,7 @@ var Global = {
 	check	: false,
 	checkMate : false,
 	turn	: false,
+	isSelected:false,
 
 	pieces	: ['b1', 'h1', 'c1', 'q', 'k', 'c2', 'h2', 'b2', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'],
 	piecesNum: ['1', '2',  '3',  '4', '5', '6',  '7',  '8',  '9',  '10', '11', '12', '13', '14', '15', '16'],
@@ -66,6 +83,36 @@ var Global = {
 	}
 };
 
+function search(array, data) {
+	var result = false;
+	for(var index=0; index<array.length; index++) {
+		if(data == array[index]) {
+			result = true;
+			break;
+		}
+	}
+
+	return result;
+}
+
+function strikeOpponent(dest) {
+}
+
+function moveSelectedPiece(dest) {
+	if(search(nextPos, dest)) {
+		clearCurrentPaths();
+		Global.isSelected = false;
+
+		var selected = Global.selected;
+		$('#'+selected.currpos).removeClass(Global.color+selected.type);
+		$('#'+selected.currpos).removeAttr("rel");
+		$('#'+dest).addClass(Global.color+selected.type);
+		$('#'+dest).attr("rel", selected.number);
+		selected.currpos = dest;
+		Global.selected = null;
+	}
+}
+
 function showPossibleMoves(cell) {
 	var rel = $(cell).attr('rel');
 	var pos = cell.id;
@@ -73,6 +120,11 @@ function showPossibleMoves(cell) {
 		var paths = Global.userPieceMap[rel].availablePath();
 		if(paths.next.length > 0 || paths.strike.length > 0) {
 			clearCurrentPaths();
+			Global.isSelected = true;
+			Global.selected = Global.userPieceMap[rel];
+		}
+		else {
+			Global.isSelected = false;
 		}
 
 		for(var p=0; p<paths.next.length; p++) {
@@ -202,8 +254,6 @@ function Piece(color, type, number, currpos) {
 	};
 };
 
-var nextPos = [];
-var strikePos = [];
 function tester(xd, yd) {
 	var nxtCell = Board.getCell(yd)+xd;
 	if(Board.isEmpty(nxtCell)) {
@@ -422,12 +472,12 @@ var Soilder = {
 		var x = new Number(currPos.charAt(1));
   		var y = Board.getCord(cellId);
 
-		var nextPos = []; 
+		nextPos = []; 
 		if(x == 2) {
 			if(Board.isEmpty(cellId + (x+1))) {
 				nextPos.push(cellId + (x+1));
 			}
-			if(Board.isEmpty(cellId + (x+2))) {
+			if(nextPos.length > 0 && Board.isEmpty(cellId + (x+2))) {
 				nextPos.push(cellId + (x+2));
 			}
 		}
@@ -437,7 +487,7 @@ var Soilder = {
 			}
 		}
 
-		var strikePos = [];
+		strikePos = [];
 		var cell;
 		if((y-1) > 0 && (x+1) < 9) {
 			cell = Board.getCell(y-1) + (x+1);
