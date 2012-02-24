@@ -31,6 +31,9 @@ $(document).ready(function() {
 	});
 	init();
 });
+$(document).unload(function() {
+	clearStatus();
+});
 var Global = {
 	king	: null,
 	userPieceMap : [],
@@ -44,9 +47,13 @@ var Global = {
 	checkMate : false,
 	turn	: false,
 	isSelected:false,
+	timer:null,
 
 	pieces	: ['b1', 'h1', 'c1', 'q', 'k', 'c2', 'h2', 'b2', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'],
 	piecesNum: ['1', '2',  '3',  '4', '5', '6',  '7',  '8',  '9',  '10', '11', '12', '13', '14', '15', '16'],
+	White: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'],
+	Black: ['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
+
 	WhiteUser: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'],
 	BlackOpponent: ['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
 
@@ -102,12 +109,99 @@ function search(array, data) {
 	return result;
 }
 
+var counter = 0;
+
+function updateMove(from, to, type) {
+	var s = "";
+	if(type == 'n') {
+		s = '{color:"'+Global.color+'", nextMove: {from: "'+from+'",to:"'+to+'"}}';
+	}
+	else if(type == 's') {
+		s = '{color:"'+Global.color+'", strike: {from: "'+from+'",to:"'+to+'"}}';
+	}
+	$.ajax({
+		url: "./jsp/updateMove.jsp?move="+s
+	});
+}
+
+function checkStatus() {
+	if(!Global.turn) {
+	//if(counter++ == 0) {
+		$.ajax({
+			url: 	"./jsp/checkStatus.jsp",
+			success: updateBoard
+		});
+	}
+}
+
+function updateBoard(data, textStatus, jqXHR) {
+	eval(data);
+}
+
+function updateStatus(moves) {
+	if(typeof(moves) != "undefined") {
+		if(moves.color == Global.opponentColor) {
+			if(moves.nextMove) {
+				movePiece(moves.nextMove.from, moves.nextMove.to);
+			}
+			else if(moves.strike) {
+				strike(moves.strike.from, moves.strike.to);
+			}
+			else if(moves.castle) {
+			}
+			clearStatus();
+			Global.turn = true;
+		}
+	}
+}
+
+function clearStatus() {
+	$.ajax({
+		url: 	"./jsp/clearStatus.jsp",
+	});
+}
+
+function movePiece(from, to) {
+	var rel = $('#'+from).attr("rel");
+	
+	var piece = Global.opponentPieceMap[rel];
+
+	$('#'+from).removeClass(Global.opponentColor+piece.type);
+	$('#'+from).removeAttr("rel");
+	$('#'+to).addClass(Global.opponentColor+piece.type);
+	$('#'+to).attr("rel", rel);
+	piece.currpos = to;
+
+}
+
+function strike(from, to) {
+	var rel = $('#'+from).attr("rel");
+	var piece = Global.opponentPieceMap[rel];
+
+	$('#'+piece.currpos).removeClass(Global.opponentColor+piece.type);
+	$('#'+piece.currpos).removeAttr("rel");
+
+
+	var destRel = $('#'+to).attr("rel");
+	var destP = Global.userPieceMap[destRel];
+	destP.currpos = "";
+	destP.alive = false;
+
+	$('#'+to).removeClass(Global.color+destP.type);
+	$('#'+to).removeAttr("rel");
+
+	$('#'+to).addClass(Global.opponentColor+piece.type);
+	$('#'+to).attr("rel", piece.number);
+	piece.currpos = to;
+}
+
 function strikeOpponent(dest) {
 	if(search(strikePos, dest)) {
 		clearCurrentPaths();
 		Global.isSelected = false;
 
 		var selected = Global.selected;
+		var from  = selected.currpos;
 		$('#'+selected.currpos).removeClass(Global.color+selected.type);
 		$('#'+selected.currpos).removeAttr("rel");
 
@@ -124,6 +218,9 @@ function strikeOpponent(dest) {
 		$('#'+dest).attr("rel", selected.number);
 		selected.currpos = dest;
 		Global.selected = null;
+
+		Global.turn = false;
+		updateMove(from, dest, 's');
 	}
 }
 
@@ -133,12 +230,16 @@ function moveSelectedPiece(dest) {
 		Global.isSelected = false;
 
 		var selected = Global.selected;
+		var from  = selected.currpos;
 		$('#'+selected.currpos).removeClass(Global.color+selected.type);
 		$('#'+selected.currpos).removeAttr("rel");
 		$('#'+dest).addClass(Global.color+selected.type);
 		$('#'+dest).attr("rel", selected.number);
 		selected.currpos = dest;
 		Global.selected = null;
+
+		Global.turn = false;
+		updateMove(from, dest, 'n');
 	}
 }
 
@@ -180,14 +281,16 @@ function init() {
 		
 	loadUserPieces();
 	loadOpponentPieces();
+	
+	Global.timer = window.setInterval("checkStatus()", 1000, "JavaScript");
 }
 
 function loadUserPieces() {
-	loadPieces(Global.color, Global.color=='w'?Global.WhiteUser:Global.BlackUser, true);
+	loadPieces(Global.color, Global.color=='w'?Global.White:Global.Black, true);
 }
 
 function loadOpponentPieces() {
-	loadPieces(Global.opponentColor, Global.opponentColor=='w'?Global.WhiteOpponent:Global.BlackOpponent, false);
+	loadPieces(Global.opponentColor, Global.opponentColor=='w'?Global.White:Global.Black, false);
 }
 
 function loadPieces(color, cells, user) {
@@ -502,37 +605,67 @@ var Soilder = {
   		var y = Board.getCord(cellId);
 
 		nextPos = []; 
-		if(x == 2) {
-			if(Board.isEmpty(cellId + (x+1))) {
+		strikePos = [];
+		var cell;
+		if(Global.color == 'w') {
+			if(x == 2) {
+				if(Board.isEmpty(cellId + (x+1))) {
 				nextPos.push(cellId + (x+1));
 			}
 			if(nextPos.length > 0 && Board.isEmpty(cellId + (x+2))) {
 				nextPos.push(cellId + (x+2));
 			}
+			}
+			else {
+				if(Board.isEmpty(cellId + (x+1))) {
+					nextPos.push(cellId + (x+1));
+				}
+			}
+			if((y-1) > 0 && (x+1) < 9) {
+				cell = Board.getCell(y-1) + (x+1);
+
+				if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
+					strikePos.push(cell);
+				}
+			}	
+			if((y+1) < 9 && (x+1) < 9) {
+				cell = Board.getCell(y+1) + (x+1);
+
+				if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
+					strikePos.push(cell);
+				}
+			}	
 		}
-		else {
-			if(Board.isEmpty(cellId + (x+1))) {
-				nextPos.push(cellId + (x+1));
+		else if(Global.color == 'b') {
+			if(x == 7) {
+				if(Board.isEmpty(cellId + (x-1))) {
+				nextPos.push(cellId + (x-1));
 			}
+			if(nextPos.length > 0 && Board.isEmpty(cellId + (x-2))) {
+				nextPos.push(cellId + (x-2));
+			}
+			}
+			else {
+				if(Board.isEmpty(cellId + (x-1))) {
+					nextPos.push(cellId + (x-1));
+				}
+			}
+			if((y-1) > 0 && (x-1) > 0) {
+				cell = Board.getCell(y-1) + (x-1);
+
+				if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
+					strikePos.push(cell);
+				}
+			}	
+			if((y+1) < 9 && (x-1) > 0) {
+				cell = Board.getCell(y+1) + (x-1);
+
+				if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
+					strikePos.push(cell);
+				}
+			}	
+
 		}
-
-		strikePos = [];
-		var cell;
-		if((y-1) > 0 && (x+1) < 9) {
-			cell = Board.getCell(y-1) + (x+1);
-
-			if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
-				strikePos.push(cell);
-			}
-		}	
-		if((y+1) < 9 && (x+1) < 9) {
-			cell = Board.getCell(y+1) + (x+1);
-
-			if(!Board.isEmpty(cell) && Board.isOpponent(cell)) {
-				strikePos.push(cell);
-			}
-		}	
-
 		return {"next": nextPos, "strike": strikePos};
 	}
 };
@@ -630,5 +763,13 @@ var Board = {
 	}
 };
 function renderBoard(obj) {
-	obj.html('<div class="white" id="A8"></div><div class="black" id="B8"></div><div class="white" id="C8"></div><div class="black" id="D8"></div><div class="white" id="E8"></div><div class="black" id="F8"></div><div class="white" id="G8"></div><div class="black" id="H8"></div><div class="black" id="A7"></div><div class="white" id="B7"></div><div class="black" id="C7"></div><div class="white" id="D7"></div><div class="black" id="E7"></div><div class="white" id="F7"></div><div class="black" id="G7"></div><div class="white" id="H7"></div><div class="white" id="A6"></div><div class="black" id="B6"></div><div class="white" id="C6"></div><div class="black" id="D6"></div><div class="white" id="E6"></div><div class="black" id="F6"></div><div class="white" id="G6"></div><div class="black" id="H6"></div><div class="black" id="A5"></div><div class="white" id="B5"></div><div class="black" id="C5"></div><div class="white" id="D5"></div><div class="black" id="E5"></div><div class="white" id="F5"></div><div class="black" id="G5"></div><div class="white" id="H5"></div><div class="white" id="A4"></div><div class="black" id="B4"></div><div class="white" id="C4"></div><div class="black" id="D4"></div><div class="white" id="E4"></div><div class="black" id="F4"></div><div class="white" id="G4"></div><div class="black" id="H4"></div><div class="black" id="A3"></div><div class="white" id="B3"></div><div class="black" id="C3"></div><div class="white" id="D3"></div><div class="black" id="E3"></div><div class="white" id="F3"></div><div class="black" id="G3"></div><div class="white" id="H3"></div><div class="white" id="A2"></div><div class="black" id="B2"></div><div class="white" id="C2"></div><div class="black" id="D2"></div><div class="white" id="E2"></div><div class="black" id="F2"></div><div class="white" id="G2"></div><div class="black" id="H2"></div><div class="black" id="A1"></div><div class="white" id="B1"></div><div class="black" id="C1"></div><div class="white" id="D1"></div><div class="black" id="E1"></div><div class="white" id="F1"></div><div class="black" id="G1"></div><div class="white" id="H1"></div>');
+	if(Global.color == 'w') {
+		obj.html('<div class="white" id="A8"></div><div class="black" id="B8"></div><div class="white" id="C8"></div><div class="black" id="D8"></div><div class="white" id="E8"></div><div class="black" id="F8"></div><div class="white" id="G8"></div><div class="black" id="H8"></div><div class="black" id="A7"></div><div class="white" id="B7"></div><div class="black" id="C7"></div><div class="white" id="D7"></div><div class="black" id="E7"></div><div class="white" id="F7"></div><div class="black" id="G7"></div><div class="white" id="H7"></div><div class="white" id="A6"></div><div class="black" id="B6"></div><div class="white" id="C6"></div><div class="black" id="D6"></div><div class="white" id="E6"></div><div class="black" id="F6"></div><div class="white" id="G6"></div><div class="black" id="H6"></div><div class="black" id="A5"></div><div class="white" id="B5"></div><div class="black" id="C5"></div><div class="white" id="D5"></div><div class="black" id="E5"></div><div class="white" id="F5"></div><div class="black" id="G5"></div><div class="white" id="H5"></div><div class="white" id="A4"></div><div class="black" id="B4"></div><div class="white" id="C4"></div><div class="black" id="D4"></div><div class="white" id="E4"></div><div class="black" id="F4"></div><div class="white" id="G4"></div><div class="black" id="H4"></div><div class="black" id="A3"></div><div class="white" id="B3"></div><div class="black" id="C3"></div><div class="white" id="D3"></div><div class="black" id="E3"></div><div class="white" id="F3"></div><div class="black" id="G3"></div><div class="white" id="H3"></div><div class="white" id="A2"></div><div class="black" id="B2"></div><div class="white" id="C2"></div><div class="black" id="D2"></div><div class="white" id="E2"></div><div class="black" id="F2"></div><div class="white" id="G2"></div><div class="black" id="H2"></div><div class="black" id="A1"></div><div class="white" id="B1"></div><div class="black" id="C1"></div><div class="white" id="D1"></div><div class="black" id="E1"></div><div class="white" id="F1"></div><div class="black" id="G1"></div><div class="white" id="H1"></div>');
+	}
+	else {
+		obj.html('<div class="white" id="H1"></div><div class="black" id="G1"></div><div class="white" id="F1"></div><div class="black" id="E1"></div><div class="white" id="D1"></div><div class="black" id="C1"></div><div class="white" id="B1"></div><div class="black" id="A1"></div><div class="black" id="H2"></div><div class="white" id="G2"></div><div class="black" id="F2"></div><div class="white" id="E2"></div><div class="black" id="D2"></div><div class="white" id="C2"></div><div class="black" id="B2"></div><div class="white" id="A2"></div><div class="white" id="H3"></div><div class="black" id="G3"></div><div class="white" id="F3"></div><div class="black" id="E3"></div><div class="white" id="D3"></div><div class="black" id="C3"></div><div class="white" id="B3"></div><div class="black" id="A3"></div><div class="black" id="H4"></div><div class="white" id="G4"></div><div class="black" id="F4"></div><div class="white" id="E4"></div><div class="black" id="D4"></div><div class="white" id="C4"></div><div class="black" id="B4"></div><div class="white" id="A4"></div><div class="white" id="H5"></div><div class="black" id="G5"></div><div class="white" id="F5"></div><div class="black" id="E5"></div><div class="white" id="D5"></div><div class="black" id="C5"></div><div class="white" id="B5"></div><div class="black" id="A5"></div><div class="black" id="H6"></div><div class="white" id="G6"></div><div class="black" id="F6"></div><div class="white" id="E6"></div><div class="black" id="D6"></div><div class="white" id="C6"></div><div class="black" id="B6"></div><div class="white" id="A6"></div><div class="white" id="H7"></div><div class="black" id="G7"></div><div class="white" id="F7"></div><div class="black" id="E7"></div><div class="white" id="D7"></div><div class="black" id="C7"></div><div class="white" id="B7"></div><div class="black" id="A7"></div><div class="black" id="H8"></div><div class="white" id="G8"></div><div class="black" id="F8"></div><div class="white" id="E8"></div><div class="black" id="D8"></div><div class="white" id="C8"></div><div class="black" id="B8"></div><div class="white" id="A8"></div>');		
+	}
+}
+function log(msg) {
+	$('#log').html($('#log').html()+msg+"<br />");
 }
