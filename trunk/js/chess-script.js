@@ -1,12 +1,14 @@
 var nextPos = [];
 var strikePos = [];
 $(document).ready(function() {
+	/*
 	$('#run').click(function() {
 		eval(document.getElementById('testcode').value);
 	});
-	Global.color = 'w';
-	Global.opponentColor = 'b';
+	Global.color = 'b';
 	Global.turn = true;
+	*/
+	renderBoard($('#board'));
 	$('#board div').click(function() {
 		if(Global.turn) {
 			var rel = $(this).attr('rel');
@@ -29,8 +31,8 @@ $(document).ready(function() {
 	});
 	init();
 });
-
 var Global = {
+	king	: null,
 	userPieceMap : [],
 	opponentPieceMap : [],
 	selected : null,
@@ -45,8 +47,11 @@ var Global = {
 
 	pieces	: ['b1', 'h1', 'c1', 'q', 'k', 'c2', 'h2', 'b2', 's1', 's2', 's3', 's4', 's5', 's6', 's7', 's8'],
 	piecesNum: ['1', '2',  '3',  '4', '5', '6',  '7',  '8',  '9',  '10', '11', '12', '13', '14', '15', '16'],
-	user	: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'],
-	opponent: ['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
+	WhiteUser: ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'],
+	BlackOpponent: ['A8', 'B8', 'C8', 'D8', 'E8', 'F8', 'G8', 'H8', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
+
+	BlackUser: ['A1', 'B1', 'C1', 'E1', 'D1', 'F1', 'G1', 'H1', 'A2', 'B2', 'C2', 'D2', 'E2', 'F2', 'G2', 'H2'],
+	WhiteOpponent: ['A8', 'B8', 'C8', 'E8', 'D8', 'F8', 'G8', 'H8', 'A7', 'B7', 'C7', 'D7', 'E7', 'F7', 'G7', 'H7'],
 
 	getType : function(num) {
 		var type = "";
@@ -166,16 +171,23 @@ function clearCurrentPaths() {
 }
 
 function init() {
+	if(Global.color == 'w') {
+		Global.opponentColor = 'b';
+	}
+	else {
+		Global.opponentColor = 'w';
+	}
+		
 	loadUserPieces();
 	loadOpponentPieces();
 }
 
 function loadUserPieces() {
-	loadPieces(Global.color, Global.user, true);
+	loadPieces(Global.color, Global.color=='w'?Global.WhiteUser:Global.BlackUser, true);
 }
 
 function loadOpponentPieces() {
-	loadPieces(Global.opponentColor, Global.opponent, false);
+	loadPieces(Global.opponentColor, Global.opponentColor=='w'?Global.WhiteOpponent:Global.BlackOpponent, false);
 }
 
 function loadPieces(color, cells, user) {
@@ -617,3 +629,6 @@ var Board = {
 		return cell;
 	}
 };
+function renderBoard(obj) {
+	obj.html('<div class="white" id="A8"></div><div class="black" id="B8"></div><div class="white" id="C8"></div><div class="black" id="D8"></div><div class="white" id="E8"></div><div class="black" id="F8"></div><div class="white" id="G8"></div><div class="black" id="H8"></div><div class="black" id="A7"></div><div class="white" id="B7"></div><div class="black" id="C7"></div><div class="white" id="D7"></div><div class="black" id="E7"></div><div class="white" id="F7"></div><div class="black" id="G7"></div><div class="white" id="H7"></div><div class="white" id="A6"></div><div class="black" id="B6"></div><div class="white" id="C6"></div><div class="black" id="D6"></div><div class="white" id="E6"></div><div class="black" id="F6"></div><div class="white" id="G6"></div><div class="black" id="H6"></div><div class="black" id="A5"></div><div class="white" id="B5"></div><div class="black" id="C5"></div><div class="white" id="D5"></div><div class="black" id="E5"></div><div class="white" id="F5"></div><div class="black" id="G5"></div><div class="white" id="H5"></div><div class="white" id="A4"></div><div class="black" id="B4"></div><div class="white" id="C4"></div><div class="black" id="D4"></div><div class="white" id="E4"></div><div class="black" id="F4"></div><div class="white" id="G4"></div><div class="black" id="H4"></div><div class="black" id="A3"></div><div class="white" id="B3"></div><div class="black" id="C3"></div><div class="white" id="D3"></div><div class="black" id="E3"></div><div class="white" id="F3"></div><div class="black" id="G3"></div><div class="white" id="H3"></div><div class="white" id="A2"></div><div class="black" id="B2"></div><div class="white" id="C2"></div><div class="black" id="D2"></div><div class="white" id="E2"></div><div class="black" id="F2"></div><div class="white" id="G2"></div><div class="black" id="H2"></div><div class="black" id="A1"></div><div class="white" id="B1"></div><div class="black" id="C1"></div><div class="white" id="D1"></div><div class="black" id="E1"></div><div class="white" id="F1"></div><div class="black" id="G1"></div><div class="white" id="H1"></div>');
+}
