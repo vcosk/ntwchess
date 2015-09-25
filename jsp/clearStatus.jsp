@@ -1,6 +1,7 @@
 <!--
 <%@ page import="java.io.*" %>
 -->
+<%@ page import="java.util.LinkedList" %>
 <%
 // FileWriter fw = null;
 // try {
@@ -21,5 +22,7 @@
 // 		}
 // 	}
 // }
+out.println(application.getAttribute("move"));
 application.setAttribute("move", null);
+application.setAttribute("move_queue", new LinkedList<String>());
 %>
